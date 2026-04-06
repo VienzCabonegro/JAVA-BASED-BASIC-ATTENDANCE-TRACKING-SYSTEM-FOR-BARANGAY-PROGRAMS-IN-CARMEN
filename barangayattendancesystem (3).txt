@@ -1,0 +1,326 @@
+package com.mycompany.barangayattendancesystem;
+import java.util.Scanner;
+import java.util.ArrayList;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
+public class BarangayAttendanceSystem {
+    
+    // DATA STORAGE
+    static ArrayList<String> names = new ArrayList<String>();
+    static ArrayList<String> zones = new ArrayList<String>();
+    static ArrayList<String> times = new ArrayList<String>();
+    static ArrayList<String> dates = new ArrayList<>();
+    static ArrayList<String> ids = new ArrayList<>();
+    
+    static ArrayList<String> archivedNames = new ArrayList<>();
+    static ArrayList<String> archivedZones = new ArrayList<>();
+    static ArrayList<String> archivedTimes = new ArrayList<>();
+    
+    static Scanner sc = new Scanner(System.in);
+    
+    public static void main(String[] args) {
+    
+        int choice;
+        
+        do {
+            System.out.println("=== MAIN MENU ===");
+            System.out.println("1. ADMIN");
+            System.out.println("2. PARTICIPANT");
+            System.out.println("3. EXIT");
+            System.out.print("Choose: ");
+            choice = sc.nextInt();
+            sc.nextLine();
+            
+           if (choice == 1) adminLogin();
+           if (choice == 2) participantMenu();
+           if (choice == 3) 
+               System.out.println("Thank you for using the system!");
+           
+           if (choice < 1 || choice > 3)
+               System.out.println("Invalid choice. Please try again.");
+           
+        } while (choice != 3);
+    }
+    // ========== ADMIN LOGIN ==========
+    static void adminLogin() {
+    String correctUsername = "admin";
+    String correctPassword = "admin123";
+
+    String username, password;
+
+    do {
+        System.out.print("Enter username: ");
+        username = sc.nextLine();
+
+        System.out.print("Enter password: ");
+        password = sc.nextLine();
+
+        if (username.equals(correctUsername) && password.equals(correctPassword)) {
+            System.out.println("Login Successfully, have a great day admin!");
+            adminMenu();
+            return; // exit login after success
+        } else {
+            System.out.println("Invalid username or password. Please try again.");
+        }
+
+        } while (true); // keep looping until correct
+    }
+    
+    // ========== PARTICIPANT ==========
+    static void participantMenu() {
+    int choice = 0;
+
+    do {
+        System.out.println("==== PARTICIPANT MENU ===");
+        System.out.println("1. Attendance");
+        System.out.println("2. Logout");
+        System.out.print("Choose: ");
+
+        // INPUT VALIDATION (non-number)
+        if (!sc.hasNextInt()) {
+            System.out.println("Invalid input. Please enter a number.");
+            sc.nextLine();
+            continue;
+        }
+
+        choice = sc.nextInt();
+        sc.nextLine();
+
+        // IF-ELSE (no switch)
+        if (choice == 1) addAttendance();
+        if (choice == 2) System.out.println("Your attendance is saved. Thank you for participating today!");
+        
+        if (choice < 1 || choice > 2) System.out.println("Invalid number. Please try again.");
+
+    } while (choice != 2);
+}
+    
+    // CREATE ATTENDANCE
+    static void addAttendance() {
+
+    String name;
+    String id;
+    int zoneNum;
+
+    // NAME VALIDATION LOOP
+    while (true) {
+        System.out.print("Enter Name: ");
+        name = sc.nextLine().toLowerCase();
+
+        if (name.matches("[a-zA-Z ]+")) {
+            break;
+        } else {
+            System.out.println("Invalid name. Letters only.");
+        }
+    }
+
+    // ID VALIDATION LOOP
+    while (true) {
+        System.out.print("Enter Id Number (XX-XXXX-XXXXX): ");
+        id = sc.nextLine();
+
+        if (id.matches("\\d{2}-\\d{4}-\\d{5}")) {
+            break;
+        } else {
+            System.out.println("Invalid Id Number. Please try again.");
+        }
+    }
+
+    // ZONE VALIDATION LOOP
+    while (true) {
+        System.out.print("Enter Zone (1-13): ");
+        if (sc.hasNextInt()) {
+            zoneNum = sc.nextInt();
+            sc.nextLine();
+
+            if (zoneNum >= 1 && zoneNum <= 13) {
+                break;
+            }
+        } else {
+            sc.nextLine();
+        }
+        System.out.println("Invalid zone. Please enter 1-13 only.");
+    }
+
+    String zone = "ZONE " + zoneNum;
+
+    // DUPLICATE CHECK
+    for (int i = 0; i < ids.size(); i++) {
+        if (ids.get(i).equals(id) && zones.get(i).equals(zone)) {
+            System.out.println("Already recorded in this zone!");
+            return;
+        }
+    }
+
+    // DATE & TIME
+    LocalDateTime now = LocalDateTime.now();
+    DateTimeFormatter timeFormat = DateTimeFormatter.ofPattern("hh:mm a");
+    DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("MMMM dd, yyyy");
+
+    String time = now.format(timeFormat);
+    String date = now.format(dateFormat);
+
+    // SAVE
+    names.add(name);
+    zones.add(zone);
+    times.add(time);
+    dates.add(date);
+    ids.add(id);
+
+    System.out.println("Barangay Carmen " + zone + " participant recorded.");
+}
+    
+    // ========== ADMIN MENU ==========
+    static void adminMenu(){
+        int choice;
+        do {
+            System.out.println("=== ADMIN MENU ===");
+            System.out.println("1. View by Zone");
+            System.out.println("2. Search");
+            System.out.println("3. Edit");
+            System.out.println("4. Archive");
+            System.out.println("5. Zone Summary");
+            System.out.println("6. Logout");
+            System.out.print("Choose: ");
+            choice = sc.nextInt();
+            sc.nextLine();
+            
+            if (choice == 1) viewZone();
+            if (choice == 2) search();
+            if (choice == 3) edit();
+            if (choice == 4) archive();
+            if (choice == 5) zoneSummary();
+            if (choice == 6) System.out.println("Logging Out... Thank you for managing the attendance today!");
+            
+        } while (choice != 6);
+    }
+    
+    // READ
+   static void viewZone() {
+    // Check if list is empty FIRST
+    if (names.isEmpty()) {
+        System.out.println("List is empty. No attendance records yet.");
+        return;
+    }
+
+    System.out.print("Enter Zone (1-13): ");
+    String z = "ZONE " + sc.nextLine();
+
+    boolean found = false;
+
+    System.out.println("=== LIST ===");
+    for (int i = 0; i < names.size(); i++) {
+        if (zones.get(i).equals(z)) {
+            System.out.println(names.get(i) + " | " + dates.get(i) + " | " + times.get(i));
+            found = true;
+        }
+    }
+
+    // If zone has no participants
+    if (!found) {
+        System.out.println("No participants found in " + z);
+    }
+}
+    
+    // SEARCH
+    static void search() {
+        
+    if (names.isEmpty()) {
+        System.out.println("No records available.");
+    return;
+    }
+    
+    System.out.print("Enter name to search: ");
+    String key = sc.nextLine().toLowerCase();
+
+    boolean found = false;
+
+    for (int i = 0; i < names.size(); i++) {
+        if (names.get(i).contains(key)) {
+            System.out.println(names.get(i) + " | " + zones.get(i));
+            found = true;
+        }
+    }
+
+    if (!found) {
+        System.out.println("Name not found in the system.");
+    }
+}
+    
+    // UPDATE
+    static void edit() {
+        System.out.print("Enter name to edit: ");
+        String name = sc.nextLine().toLowerCase();
+        
+        for (int i = 0; i < names.size(); i++) {
+            if (names.get(i).equals(name)) {
+                System.out.print("New name: ");
+                names.set(i, sc.nextLine().toLowerCase());
+                
+                System.out.print("New zone (1-13): ");
+                int newZone = sc.nextInt();
+                sc.nextLine();
+
+            if (newZone >= 1 && newZone <= 13) {
+                zones.set(i, "ZONE " + newZone);
+                System.out.println("Updated!");
+            } else {
+                System.out.println("Invalid zone.");
+}
+            }
+        }
+        System.out.println("Name not found.");
+    }
+    
+    // ARCHIVE
+static void archive() {
+        System.out.print("Enter name to archive: ");
+        String name = sc.nextLine().toLowerCase();
+
+        boolean found = false;
+
+        for (int i = 0; i < names.size(); i++) {
+            if (names.get(i).equals(name)) {
+
+                archivedNames.add(names.get(i));
+                archivedZones.add(zones.get(i));
+                archivedTimes.add(times.get(i));
+
+                names.remove(i);
+                zones.remove(i);
+                times.remove(i);
+
+                found = true;
+                break;
+            }
+        }
+
+        if (found) {
+            System.out.println("Archived successfully.");
+        } else {
+            System.out.println("Name not found.");
+        }
+    }
+    
+    // ZONE SUMMARY
+static void zoneSummary() {
+    System.out.println("=== ZONE SUMMARY ===");
+
+    for (int i = 1; i <= 13; i++) {
+        String zoneLabel = "ZONE " + i;
+        int count = 0;
+
+        System.out.println("\n" + zoneLabel + ":");
+
+        for (int j = 0; j < zones.size(); j++) {
+            if (zones.get(j).equals(zoneLabel)) {
+                System.out.println("- " + names.get(j) + " | " + ids.get(j));
+                count++;
+            }
+        }
+
+        System.out.println("Total: " + count + " participant(s)");
+        }
+    }
+}
